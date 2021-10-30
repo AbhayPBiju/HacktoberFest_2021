@@ -1,0 +1,288 @@
+//
+// This file is part of the GNU ISO C++ Library.  This library is free
+// software; you can redistribute it and/or modify it under the
+// terms of the GNU General Public License as published by the
+// Free Software Foundation; either version 3, or (at your option)
+// any later version.
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// Under Section 7 of GPL version 3, you are granted additional
+// permissions described in the GCC Runtime Library Exception, version
+// 3.1, as published by the Free Software Foundation.
+// You should have received a copy of the GNU General Public License and
+// a copy of the GCC Runtime Library Exception along with this program;
+// see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+// <http://www.gnu.org/licenses/>.
+/** @file include/complex
+ *  This is a Standard C++ Library header.
+ */
+//
+// ISO C++ 14882: 26.2  Complex Numbers
+// Note: this is not a conforming implementation.
+// Initially implemented by Ulrich Drepper <drepper@cygnus.com>
+// Improved by Gabriel Dos Reis <dosreis@cmla.ens-cachan.fr>
+//
+#ifndef _GLIBCXX_COMPLEX
+#define _GLIBCXX_COMPLEX 1
+#pragma GCC system_header
+#include <bits/c++config.h>
+#include <bits/cpp_type_traits.h>
+#include <ext/type_traits.h>
+#include <cmath>
+#include <sstream>
+// Get rid of a macro possibly defined in <complex.h>
+#undef complex
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+  /**
+   * @defgroup complex_numbers Complex Numbers
+   * @ingroup numerics
+   *
+   * Classes and functions for complex numbers.
+   * @{
+   */
+  // Forward declarations.
+  template<typename _Tp> class complex;
+  template<> class complex<float>;
+  template<> class complex<double>;
+  template<> class complex<long double>;
+  ///  Return magnitude of @a z.
+  template<typename _Tp> _Tp abs(const complex<_Tp>&);
+  ///  Return phase angle of @a z.
+  template<typename _Tp> _Tp arg(const complex<_Tp>&);
+  ///  Return @a z magnitude squared.
+  template<typename _Tp> _Tp norm(const complex<_Tp>&);
+  ///  Return complex conjugate of @a z.
+  template<typename _Tp> complex<_Tp> conj(const complex<_Tp>&);
+  ///  Return complex with magnitude @a rho and angle @a theta.
+  template<typename _Tp> complex<_Tp> polar(const _Tp&, const _Tp& = 0);
+  // Transcendentals:
+  /// Return complex cosine of @a z.
+  template<typename _Tp> complex<_Tp> cos(const complex<_Tp>&);
+  /// Return complex hyperbolic cosine of @a z.
+  template<typename _Tp> complex<_Tp> cosh(const complex<_Tp>&);
+  /// Return complex base e exponential of @a z.
+  template<typename _Tp> complex<_Tp> exp(const complex<_Tp>&);
+  /// Return complex natural logarithm of @a z.
+  template<typename _Tp> complex<_Tp> log(const complex<_Tp>&);
+  /// Return complex base 10 logarithm of @a z.
+  template<typename _Tp> complex<_Tp> log10(const complex<_Tp>&);
+  /// Return @a x to the @a y'th power.
+  template<typename _Tp> complex<_Tp> pow(const complex<_Tp>&, int);
+  /// Return @a x to the @a y'th power.
+  template<typename _Tp> complex<_Tp> pow(const complex<_Tp>&, const _Tp&);
+  /// Return @a x to the @a y'th power.
+  template<typename _Tp> complex<_Tp> pow(const complex<_Tp>&,
+                                          const complex<_Tp>&);
+  /// Return @a x to the @a y'th power.
+  template<typename _Tp> complex<_Tp> pow(const _Tp&, const complex<_Tp>&);
+  /// Return complex sine of @a z.
+  template<typename _Tp> complex<_Tp> sin(const complex<_Tp>&);
+  /// Return complex hyperbolic sine of @a z.
+  template<typename _Tp> complex<_Tp> sinh(const complex<_Tp>&);
+  /// Return complex square root of @a z.
+  template<typename _Tp> complex<_Tp> sqrt(const complex<_Tp>&);
+  /// Return complex tangent of @a z.
+  template<typename _Tp> complex<_Tp> tan(const complex<_Tp>&);
+  /// Return complex hyperbolic tangent of @a z.
+  template<typename _Tp> complex<_Tp> tanh(const complex<_Tp>&);
+  // 26.2.2  Primary template class complex
+  /**
+   *  Template to represent complex numbers.
+   *
+   *  Specializations for float, double, and long double are part of the
+   *  library.  Results with any other type are not guaranteed.
+   *
+   *  @param  Tp  Type of real and imaginary values.
+  */
+  template<typename _Tp>
+    struct complex
+    {
+      /// Value typedef.
+      typedef _Tp value_type;
+      ///  Default constructor.  First parameter is x, second parameter is y.
+      ///  Unspecified parameters default to 0.
+      _GLIBCXX_CONSTEXPR complex(const _Tp& __r = _Tp(), const _Tp& __i = _Tp())
+      : _M_real(__r), _M_imag(__i) { }
+      // Let the compiler synthesize the copy constructor
+#if __cplusplus >= 201103L
+      constexpr complex(const complex&) = default;
+#endif
+      ///  Converting constructor.
+      template<typename _Up>
+        _GLIBCXX_CONSTEXPR complex(const complex<_Up>& __z)
+        : _M_real(__z.real()), _M_imag(__z.imag()) { }
+#if __cplusplus >= 201103L
+      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+      // DR 387. std::complex over-encapsulated.
+      _GLIBCXX_ABI_TAG_CXX11
+      constexpr _Tp
+      real() const { return _M_real; }
+      _GLIBCXX_ABI_TAG_CXX11
+      constexpr _Tp
+      imag() const { return _M_imag; }
+#else
+      ///  Return real part of complex number.
+      _Tp&
+      real() { return _M_real; }
+      ///  Return real part of complex number.
+      const _Tp&
+      real() const { return _M_real; }
+      ///  Return imaginary part of complex number.
+      _Tp&
+      imag() { return _M_imag; }
+      ///  Return imaginary part of complex number.
+      const _Tp&
+      imag() const { return _M_imag; }
+#endif
+      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+      // DR 387. std::complex over-encapsulated.
+      void
+      real(_Tp __val) { _M_real = __val; }
+      void
+      imag(_Tp __val) { _M_imag = __val; }
+      /// Assign a scalar to this complex number.
+      complex<_Tp>& operator=(const _Tp&);
+      /// Add a scalar to this complex number.
+      // 26.2.5/1
+      complex<_Tp>&
+      operator+=(const _Tp& __t)
+      {
+        _M_real += __t;
+        return *this;
+      }
+      /// Subtract a scalar from this complex number.
+      // 26.2.5/3
+      complex<_Tp>&
+      operator-=(const _Tp& __t)
+      {
+        _M_real -= __t;
+        return *this;
+      }
+      /// Multiply this complex number by a scalar.
+      complex<_Tp>& operator*=(const _Tp&);
+      /// Divide this complex number by a scalar.
+      complex<_Tp>& operator/=(const _Tp&);
+      // Let the compiler synthesize the copy assignment operator
+#if __cplusplus >= 201103L
+      complex& operator=(const complex&) = default;
+#endif
+      /// Assign another complex number to this one.
+      template<typename _Up>
+        complex<_Tp>& operator=(const complex<_Up>&);
+      /// Add another complex number to this one.
+      template<typename _Up>
+        complex<_Tp>& operator+=(const complex<_Up>&);
+      /// Subtract another complex number from this one.
+      template<typename _Up>
+        complex<_Tp>& operator-=(const complex<_Up>&);
+      /// Multiply this complex number by another.
+      template<typename _Up>
+        complex<_Tp>& operator*=(const complex<_Up>&);
+      /// Divide this complex number by another.
+      template<typename _Up>
+        complex<_Tp>& operator/=(const complex<_Up>&);
+      _GLIBCXX_CONSTEXPR complex __rep() const
+      { return *this; }
+    private:
+      _Tp _M_real;
+      _Tp _M_imag;
+    };
+  template<typename _Tp>
+    complex<_Tp>&
+    complex<_Tp>::operator=(const _Tp& __t)
+    {
+     _M_real = __t;
+     _M_imag = _Tp();
+     return *this;
+    }
+  // 26.2.5/5
+  template<typename _Tp>
+    complex<_Tp>&
+    complex<_Tp>::operator*=(const _Tp& __t)
+    {
+      _M_real *= __t;
+      _M_imag *= __t;
+      return *this;
+    }
+  // 26.2.5/7
+  template<typename _Tp>
+    complex<_Tp>&
+    complex<_Tp>::operator/=(const _Tp& __t)
+    {
+      _M_real /= __t;
+      _M_imag /= __t;
+      return *this;
+    }
+  template<typename _Tp>
+    template<typename _Up>
+    complex<_Tp>&
+    complex<_Tp>::operator=(const complex<_Up>& __z)
+    {
+      _M_real = __z.real();
+      _M_imag = __z.imag();
+      return *this;
+    }
+  // 26.2.5/9
+  template<typename _Tp>
+    template<typename _Up>
+    complex<_Tp>&
+    complex<_Tp>::operator+=(const complex<_Up>& __z)
+    {
+      _M_real += __z.real();
+      _M_imag += __z.imag();
+      return *this;
+    }
+  // 26.2.5/11
+  template<typename _Tp>
+    template<typename _Up>
+    complex<_Tp>&
+    complex<_Tp>::operator-=(const complex<_Up>& __z)
+    {
+      _M_real -= __z.real();
+      _M_imag -= __z.imag();
+      return *this;
+    }
+  // 26.2.5/13
+  // XXX: This is a grammar school implementation.
+  template<typename _Tp>
+    template<typename _Up>
+    complex<_Tp>&
+    complex<_Tp>::operator*=(const complex<_Up>& __z)
+    {
+      const _Tp __r = _M_real * __z.real() - _M_imag * __z.imag();
+      _M_imag = _M_real * __z.imag() + _M_imag * __z.real();
+      _M_real = __r;
+      return *this;
+    }
+  // 26.2.5/15
+  // XXX: This is a grammar school implementation.
+  template<typename _Tp>
+    template<typename _Up>
+    complex<_Tp>&
+    complex<_Tp>::operator/=(const complex<_Up>& __z)
+    {
+      const _Tp __r =  _M_real * __z.real() + _M_imag * __z.imag();
+      const _Tp __n = std::norm(__z);
+      _M_imag = (_M_imag * __z.real() - _M_real * __z.imag()) / __n;
+      _M_real = __r / __n;
+      return *this;
+    }
+  // Operators:
+  //@{
+  ///  Return new complex value @a x plus @a y.
+  template<typename _Tp>
+    inline complex<_Tp>
+    operator+(const complex<_Tp>& __x, const complex<_Tp>& __y)
+    {
+      complex<_Tp> __r = __x;
+      __r += __y;
+      return __r;
+    }
+  template<typename _Tp>
+    inline complex<_Tp>
+    operator+(const complex<_Tp>& __x, const _Tp& __y)
+    {
